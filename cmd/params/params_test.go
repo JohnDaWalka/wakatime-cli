@@ -1118,7 +1118,7 @@ func TestLoadHeartbeatParams_SanitizeParams_HideBranchNames_FlagTakesPrecedence(
 func TestLoadHeartbeatParams_SanitizeParams_HideBranchNames_ConfigTakesPrecedence(t *testing.T) {
 	v := viper.New()
 	v.Set("entity", "/path/to/file")
-	v.Set("settings.hide_branch_names", "true")
+	v.Set("settings.hide_branch_names", true)
 	v.Set("settings.hide_branchnames", "ignored")
 	v.Set("settings.hidebranchnames", "ignored")
 
@@ -1133,7 +1133,7 @@ func TestLoadHeartbeatParams_SanitizeParams_HideBranchNames_ConfigTakesPrecedenc
 func TestLoadHeartbeatParams_SanitizeParams_HideBranchNames_ConfigDeprecatedOneTakesPrecedence(t *testing.T) {
 	v := viper.New()
 	v.Set("entity", "/path/to/file")
-	v.Set("settings.hide_branchnames", "true")
+	v.Set("settings.hide_branchnames", true)
 	v.Set("settings.hidebranchnames", "ignored")
 
 	params, err := cmdparams.LoadHeartbeatParams(context.Background(), v)
@@ -1147,7 +1147,7 @@ func TestLoadHeartbeatParams_SanitizeParams_HideBranchNames_ConfigDeprecatedOneT
 func TestLoadHeartbeatParams_SanitizeParams_HideBranchNames_ConfigDeprecatedTwo(t *testing.T) {
 	v := viper.New()
 	v.Set("entity", "/path/to/file")
-	v.Set("settings.hidebranchnames", "true")
+	v.Set("settings.hidebranchnames", true)
 
 	params, err := cmdparams.LoadHeartbeatParams(context.Background(), v)
 	require.NoError(t, err)
@@ -1168,6 +1168,163 @@ func TestLoadHeartbeatParams_SanitizeParams_HideBranchNames_InvalidRegex(t *test
 	v := viper.New()
 	v.Set("entity", "/path/to/file")
 	v.Set("hide-branch-names", ".*secret.*\n[0-9+")
+	v.Set("log-file", logFile.Name())
+
+	logger, err := cmd.SetupLogging(ctx, v)
+	require.NoError(t, err)
+
+	defer logger.Flush()
+
+	ctx = log.ToContext(ctx, logger)
+
+	_, err = cmdparams.LoadHeartbeatParams(ctx, v)
+	require.NoError(t, err)
+
+	output, err := io.ReadAll(logFile)
+	require.NoError(t, err)
+
+	assert.Contains(t, string(output), "failed to compile regex pattern \\\"(?i)[0-9+\\\", it will be ignored")
+}
+
+func TestLoadHeartbeatParams_SanitizeParams_HideDependencies_Flag(t *testing.T) {
+	v := viper.New()
+	v.Set("entity", "/path/to/file")
+	v.Set("settings.hide_dependencies", true)
+
+	params, err := cmdparams.LoadHeartbeatParams(context.Background(), v)
+	require.NoError(t, err)
+
+	assert.Equal(t, cmdparams.SanitizeParams{
+		HideDependencies: []regex.Regex{regex.NewRegexpWrap(regexp.MustCompile(".*"))},
+	}, params.Sanitize)
+}
+
+func TestLoadHeartbeatParams_SanitizeParams_HideDependencies_True(t *testing.T) {
+	ctx := context.Background()
+
+	tests := map[string]string{
+		"lowercase":       "true",
+		"uppercase":       "TRUE",
+		"first uppercase": "True",
+	}
+
+	for name, viperValue := range tests {
+		t.Run(name, func(t *testing.T) {
+			v := viper.New()
+			v.Set("entity", "/path/to/file")
+			v.Set("hide-dependencies", viperValue)
+
+			params, err := cmdparams.LoadHeartbeatParams(ctx, v)
+			require.NoError(t, err)
+
+			assert.Equal(t, cmdparams.SanitizeParams{
+				HideDependencies: []regex.Regex{regex.NewRegexpWrap(regexp.MustCompile(".*"))},
+			}, params.Sanitize)
+		})
+	}
+}
+
+func TestLoadHeartbeatParams_SanitizeParams_HideDependencies_False(t *testing.T) {
+	ctx := context.Background()
+
+	tests := map[string]string{
+		"lowercase":       "false",
+		"uppercase":       "FALSE",
+		"first uppercase": "False",
+	}
+
+	for name, viperValue := range tests {
+		t.Run(name, func(t *testing.T) {
+			v := viper.New()
+			v.Set("entity", "/path/to/file")
+			v.Set("hide-dependencies", viperValue)
+
+			params, err := cmdparams.LoadHeartbeatParams(ctx, v)
+			require.NoError(t, err)
+
+			assert.Equal(t, cmdparams.SanitizeParams{
+				HideDependencies: []regex.Regex{regex.NewRegexpWrap(regexp.MustCompile("a^"))},
+			}, params.Sanitize)
+		})
+	}
+}
+
+func TestLoadHeartbeatParams_SanitizeParams_HideDependencies_List(t *testing.T) {
+	ctx := context.Background()
+
+	tests := map[string]struct {
+		ViperValue string
+		Expected   []regex.Regex
+	}{
+		"regex": {
+			ViperValue: "fix.*",
+			Expected: []regex.Regex{
+				regex.NewRegexpWrap(regexp.MustCompile("(?i)fix.*")),
+			},
+		},
+		"regex list": {
+			ViperValue: ".*secret.*\nfix.*",
+			Expected: []regex.Regex{
+				regex.NewRegexpWrap(regexp.MustCompile("(?i).*secret.*")),
+				regex.NewRegexpWrap(regexp.MustCompile("(?i)fix.*")),
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			v := viper.New()
+			v.Set("entity", "/path/to/file")
+			v.Set("hide-dependencies", test.ViperValue)
+
+			params, err := cmdparams.LoadHeartbeatParams(ctx, v)
+			require.NoError(t, err)
+
+			assert.Equal(t, cmdparams.SanitizeParams{
+				HideDependencies: test.Expected,
+			}, params.Sanitize)
+		})
+	}
+}
+
+func TestLoadHeartbeatParams_SanitizeParams_HideDependencies_FlagTakesPrecedence(t *testing.T) {
+	v := viper.New()
+	v.Set("entity", "/path/to/file")
+	v.Set("hide-dependencies", true)
+	v.Set("settings.hide_dependencies", "ignored")
+
+	params, err := cmdparams.LoadHeartbeatParams(context.Background(), v)
+	require.NoError(t, err)
+
+	assert.Equal(t, cmdparams.SanitizeParams{
+		HideDependencies: []regex.Regex{regex.NewRegexpWrap(regexp.MustCompile(".*"))},
+	}, params.Sanitize)
+}
+
+func TestLoadHeartbeatParams_SanitizeParams_HideDependencies_FromConfig(t *testing.T) {
+	v := viper.New()
+	v.Set("entity", "/path/to/file")
+	v.Set("settings.hide_dependencies", true)
+
+	params, err := cmdparams.LoadHeartbeatParams(context.Background(), v)
+	require.NoError(t, err)
+
+	assert.Equal(t, cmdparams.SanitizeParams{
+		HideDependencies: []regex.Regex{regex.NewRegexpWrap(regexp.MustCompile(".*"))},
+	}, params.Sanitize)
+}
+
+func TestLoadHeartbeatParams_SanitizeParams_HideDependencies_InvalidRegex(t *testing.T) {
+	logFile, err := os.CreateTemp(t.TempDir(), "")
+	require.NoError(t, err)
+
+	defer logFile.Close()
+
+	ctx := context.Background()
+
+	v := viper.New()
+	v.Set("entity", "/path/to/file")
+	v.Set("hide-dependencies", ".*secret.*\n[0-9+")
 	v.Set("log-file", logFile.Name())
 
 	logger, err := cmd.SetupLogging(ctx, v)
@@ -2689,7 +2846,7 @@ func TestHeartbeat_String(t *testing.T) {
 			" project file: false), project params: (alternate: '', branch alternate: '', map patterns:"+
 			" '[]', override: '', git submodules disabled: '[]', git submodule project map: '[]'), sanitize"+
 			" params: (hide branch names: '[]', hide project folder: false, hide file names: '[]',"+
-			" hide project names: '[]', project path override: '')",
+			" hide project names: '[]', hide dependencies: '[]', project path override: '')",
 		heartbeat.String(),
 	)
 }
@@ -2753,6 +2910,7 @@ func TestLoadHeartbeatParams_ProjectFromGitRemote(t *testing.T) {
 func TestSanitizeParams_String(t *testing.T) {
 	sanitizeparams := cmdparams.SanitizeParams{
 		HideBranchNames:     []regex.Regex{regex.NewRegexpWrap(regexp.MustCompile("^/hide"))},
+		HideDependencies:    []regex.Regex{regex.NewRegexpWrap(regexp.MustCompile("^/hide"))},
 		HideProjectFolder:   true,
 		HideFileNames:       []regex.Regex{regex.NewRegexpWrap(regexp.MustCompile("^/hide"))},
 		HideProjectNames:    []regex.Regex{regex.NewRegexpWrap(regexp.MustCompile("^/hide"))},
@@ -2762,7 +2920,7 @@ func TestSanitizeParams_String(t *testing.T) {
 	assert.Equal(
 		t,
 		"hide branch names: '[^/hide]', hide project folder: true, hide file names: '[^/hide]',"+
-			" hide project names: '[^/hide]', project path override: 'path/to/project'",
+			" hide project names: '[^/hide]', hide dependencies: '[^/hide]', project path override: 'path/to/project'",
 		sanitizeparams.String(),
 	)
 }

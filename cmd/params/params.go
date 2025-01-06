@@ -154,6 +154,7 @@ type (
 	// SanitizeParams params for heartbeat sanitization.
 	SanitizeParams struct {
 		HideBranchNames     []regex.Regex
+		HideDependencies    []regex.Regex
 		HideFileNames       []regex.Regex
 		HideProjectFolder   bool
 		HideProjectNames    []regex.Regex
@@ -555,6 +556,22 @@ func loadSanitizeParams(ctx context.Context, v *viper.Viper) (SanitizeParams, er
 		)
 	}
 
+	// hide dependencies
+	hideDependenciesStr := vipertools.FirstNonEmptyString(
+		v,
+		"hide-dependencies",
+		"settings.hide_dependencies",
+	)
+
+	hideDependenciesPatterns, err := parseBoolOrRegexList(ctx, hideDependenciesStr)
+	if err != nil {
+		return SanitizeParams{}, fmt.Errorf(
+			"failed to parse regex hide dependencies param %q: %s",
+			hideDependenciesStr,
+			err,
+		)
+	}
+
 	// hide project names
 	hideProjectNamesStr := vipertools.FirstNonEmptyString(
 		v,
@@ -595,6 +612,7 @@ func loadSanitizeParams(ctx context.Context, v *viper.Viper) (SanitizeParams, er
 
 	return SanitizeParams{
 		HideBranchNames:     hideBranchNamesPatterns,
+		HideDependencies:    hideDependenciesPatterns,
 		HideFileNames:       hideFileNamesPatterns,
 		HideProjectFolder:   vipertools.FirstNonEmptyBool(v, "hide-project-folder", "settings.hide_project_folder"),
 		HideProjectNames:    hideProjectNamesPatterns,
@@ -1146,11 +1164,12 @@ func (p ProjectParams) String() string {
 func (p SanitizeParams) String() string {
 	return fmt.Sprintf(
 		"hide branch names: '%s', hide project folder: %t, hide file names: '%s',"+
-			" hide project names: '%s', project path override: '%s'",
+			" hide project names: '%s', hide dependencies: '%s', project path override: '%s'",
 		p.HideBranchNames,
 		p.HideProjectFolder,
 		p.HideFileNames,
 		p.HideProjectNames,
+		p.HideDependencies,
 		p.ProjectPathOverride,
 	)
 }
