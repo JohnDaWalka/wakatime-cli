@@ -111,7 +111,7 @@ some/submodule/name = new project name
 | hostname                       | Optional name of local machine. By default, auto-detects the local machine’s hostname. | _string_ | |
 | log_file                       | Optional log file path. | _filepath_ | `~/.wakatime/wakatime.log` |
 | import_cfg                     | Optional path to another wakatime.cfg file to import. If set it will overwrite values loaded from $WAKATIME_HOME/.wakatime.cfg file. | _filepath_ | |
-| metrics                        | When set, collects metrics usage in '~/.wakatime/metrics' folder. For further reference visit <https://go.dev/blog/pprof>. | _bool_ | `false` |
+| metrics                        | When set, collects metrics usage in `~/.wakatime/metrics` folder. For further reference visit <https://go.dev/blog/pprof>. | _bool_ | `false` |
 | guess_language                 | When `true`, enables detecting programming language from file contents. | _bool_ | `false` |
 
 ### Project Map Section
