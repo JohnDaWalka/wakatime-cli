@@ -20,16 +20,14 @@ func TestWithSanitization_ObfuscateFile(t *testing.T) {
 	handle := opt(func(_ context.Context, hh []heartbeat.Heartbeat) ([]heartbeat.Result, error) {
 		assert.Equal(t, []heartbeat.Heartbeat{
 			{
-				Branch:       heartbeat.PointerTo("heartbeat"),
-				Category:     heartbeat.CodingCategory,
-				Dependencies: []string{"dep1", "dep2"},
-				Entity:       "HIDDEN.go",
-				EntityType:   heartbeat.FileType,
-				IsWrite:      heartbeat.PointerTo(true),
-				Language:     heartbeat.PointerTo("Go"),
-				Project:      heartbeat.PointerTo("wakatime"),
-				Time:         1585598060,
-				UserAgent:    "wakatime/13.0.7",
+				Category:   heartbeat.CodingCategory,
+				Entity:     "HIDDEN.go",
+				EntityType: heartbeat.FileType,
+				IsWrite:    heartbeat.PointerTo(true),
+				Language:   heartbeat.PointerTo("Go"),
+				Project:    heartbeat.PointerTo("wakatime"),
+				Time:       1585598060,
+				UserAgent:  "wakatime/13.0.7",
 			},
 		}, hh)
 
@@ -74,16 +72,14 @@ func TestSanitize_Obfuscate(t *testing.T) {
 				UserAgent:      "wakatime/13.0.7",
 			},
 			Expected: heartbeat.Heartbeat{
-				Branch:       heartbeat.PointerTo("heartbeat"),
-				Category:     heartbeat.CodingCategory,
-				Dependencies: []string{"dep1", "dep2"},
-				Entity:       "HIDDEN.go",
-				EntityType:   heartbeat.FileType,
-				IsWrite:      heartbeat.PointerTo(true),
-				Language:     heartbeat.PointerTo("Go"),
-				Project:      heartbeat.PointerTo("wakatime"),
-				Time:         1585598060,
-				UserAgent:    "wakatime/13.0.7",
+				Category:   heartbeat.CodingCategory,
+				Entity:     "HIDDEN.go",
+				EntityType: heartbeat.FileType,
+				IsWrite:    heartbeat.PointerTo(true),
+				Language:   heartbeat.PointerTo("Go"),
+				Project:    heartbeat.PointerTo("wakatime"),
+				Time:       1585598060,
+				UserAgent:  "wakatime/13.0.7",
 			},
 		},
 		"app": {
@@ -138,16 +134,15 @@ func TestSanitize_ObfuscateFile_SkipBranchIfNotMatching(t *testing.T) {
 	})
 
 	assert.Equal(t, heartbeat.Heartbeat{
-		Branch:       heartbeat.PointerTo("heartbeat"),
-		Dependencies: []string{"dep1", "dep2"},
-		Category:     heartbeat.CodingCategory,
-		Entity:       "HIDDEN.go",
-		EntityType:   heartbeat.FileType,
-		IsWrite:      heartbeat.PointerTo(true),
-		Language:     heartbeat.PointerTo("Go"),
-		Project:      heartbeat.PointerTo("wakatime"),
-		Time:         1585598060,
-		UserAgent:    "wakatime/13.0.7",
+		Branch:     heartbeat.PointerTo("heartbeat"),
+		Category:   heartbeat.CodingCategory,
+		Entity:     "HIDDEN.go",
+		EntityType: heartbeat.FileType,
+		IsWrite:    heartbeat.PointerTo(true),
+		Language:   heartbeat.PointerTo("Go"),
+		Project:    heartbeat.PointerTo("wakatime"),
+		Time:       1585598060,
+		UserAgent:  "wakatime/13.0.7",
 	}, r)
 }
 

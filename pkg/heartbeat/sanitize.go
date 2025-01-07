@@ -55,6 +55,14 @@ func Sanitize(ctx context.Context, h Heartbeat, config SanitizeConfig) Heartbeat
 		ProjectPathOverride: h.ProjectPathOverride,
 	}
 
+	// project patterns
+	if h.Project != nil {
+		check.Patterns = config.ProjectPatterns
+		if ShouldSanitize(ctx, check) {
+			h = sanitizeMetaData(h)
+		}
+	}
+
 	// file patterns
 	check.Patterns = config.FilePatterns
 	if ShouldSanitize(ctx, check) {
@@ -64,15 +72,15 @@ func Sanitize(ctx context.Context, h Heartbeat, config SanitizeConfig) Heartbeat
 			h.Entity = "HIDDEN"
 		}
 
-		h = sanitizeMetaData(h)
-	}
-
-	// project patterns
-	if h.Project != nil {
-		check.Patterns = config.ProjectPatterns
-		if ShouldSanitize(ctx, check) {
-			h = sanitizeMetaData(h)
+		if len(config.BranchPatterns) == 0 {
+			h.Branch = nil
 		}
+
+		if len(config.DependencyPatterns) == 0 {
+			h.Dependencies = nil
+		}
+
+		h = sanitizeMetaData(h)
 	}
 
 	// branch patterns
