@@ -598,7 +598,7 @@ func TestSendHeartbeats_NonExistingEntity(t *testing.T) {
 	assert.Contains(t, string(output), "skipping because of non-existing file")
 }
 
-func TestSendHeartbeats_IsUnsavedEntity(t *testing.T) {
+func TestSendHeartbeats_ExtraHeartbeatsIsUnsavedEntity(t *testing.T) {
 	resetSingleton(t)
 
 	testServerURL, router, tearDown := setupTestServer()
@@ -639,8 +639,8 @@ func TestSendHeartbeats_IsUnsavedEntity(t *testing.T) {
 
 		expectedBodyStr := fmt.Sprintf(
 			string(expectedBody),
-			entities[0].Entity, userAgent,
-			entities[1].Entity, userAgent,
+			entities[0].Entity, subfolders, userAgent,
+			entities[1].Entity, subfolders, userAgent,
 			entities[2].Entity, subfolders, userAgent,
 		)
 
@@ -707,7 +707,6 @@ func TestSendHeartbeats_IsUnsavedEntity(t *testing.T) {
 	v.Set("lines-in-file", 91)
 	v.Set("plugin", plugin)
 	v.Set("time", 1585598051)
-	v.Set("timeout", 5)
 	v.Set("extra-heartbeats", true)
 	v.Set("log-file", logFile.Name())
 	v.Set("verbose", true)
