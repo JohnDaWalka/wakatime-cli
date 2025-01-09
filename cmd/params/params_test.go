@@ -2345,84 +2345,101 @@ func TestLoadAPIParams_APIKeyFromEnv_ConfigTakesPrecedence(t *testing.T) {
 	assert.Equal(t, "00000000-0000-4000-8000-000000000000", params.Key)
 }
 
-func TestLoadAPIParams_APIUrl(t *testing.T) {
+func TestLoadAPIParams_APIUrl_Sanitize(t *testing.T) {
 	ctx := context.Background()
 
 	tests := map[string]struct {
-		ViperAPIUrl       string
-		ViperAPIUrlConfig string
-		ViperAPIUrlOld    string
-		Expected          cmdparams.API
+		URL      string
+		Expected string
 	}{
-		"api url flag takes precedence": {
-			ViperAPIUrl:       "http://localhost:8080",
-			ViperAPIUrlConfig: "http://localhost:8081",
-			ViperAPIUrlOld:    "http://localhost:8082",
-			Expected: cmdparams.API{
-				Key:      "00000000-0000-4000-8000-000000000000",
-				URL:      "http://localhost:8080",
-				Hostname: "my-computer",
-			},
-		},
-		"api url deprecated flag takes precedence": {
-			ViperAPIUrlConfig: "http://localhost:8081",
-			ViperAPIUrlOld:    "http://localhost:8082",
-			Expected: cmdparams.API{
-				Key:      "00000000-0000-4000-8000-000000000000",
-				URL:      "http://localhost:8082",
-				Hostname: "my-computer",
-			},
-		},
-		"api url from config": {
-			ViperAPIUrlConfig: "http://localhost:8081",
-			Expected: cmdparams.API{
-				Key:      "00000000-0000-4000-8000-000000000000",
-				URL:      "http://localhost:8081",
-				Hostname: "my-computer",
-			},
-		},
 		"api url with legacy heartbeats endpoint": {
-			ViperAPIUrl: "http://localhost:8080/api/v1/heartbeats.bulk",
-			Expected: cmdparams.API{
-				Key:      "00000000-0000-4000-8000-000000000000",
-				URL:      "http://localhost:8080/api/v1",
-				Hostname: "my-computer",
-			},
+			URL:      "http://localhost:8080/api/v1/heartbeats.bulk",
+			Expected: "http://localhost:8080/api/v1",
+		},
+		"api url with users heartbeats endpoint": {
+			URL:      "http://localhost:8080/users/current/heartbeats",
+			Expected: "http://localhost:8080",
 		},
 		"api url with trailing slash": {
-			ViperAPIUrl: "http://localhost:8080/api/",
-			Expected: cmdparams.API{
-				Key:      "00000000-0000-4000-8000-000000000000",
-				URL:      "http://localhost:8080/api",
-				Hostname: "my-computer",
-			},
+			URL:      "http://localhost:8080/api/",
+			Expected: "http://localhost:8080/api",
 		},
 		"api url with wakapi style endpoint": {
-			ViperAPIUrl: "http://localhost:8080/api/heartbeat",
-			Expected: cmdparams.API{
-				Key:      "00000000-0000-4000-8000-000000000000",
-				URL:      "http://localhost:8080/api",
-				Hostname: "my-computer",
-			},
+			URL:      "http://localhost:8080/api/heartbeat",
+			Expected: "http://localhost:8080/api",
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			v := viper.New()
-			v.Set("hostname", "my-computer")
-			v.Set("timeout", 0)
 			v.Set("key", "00000000-0000-4000-8000-000000000000")
-			v.Set("api-url", test.ViperAPIUrl)
-			v.Set("apiurl", test.ViperAPIUrlOld)
-			v.Set("settings.api_url", test.ViperAPIUrlConfig)
+			v.Set("api-url", test.URL)
 
 			params, err := cmdparams.LoadAPIParams(ctx, v)
 			require.NoError(t, err)
 
-			assert.Equal(t, test.Expected, params)
+			assert.Equal(t, test.Expected, params.URL)
 		})
 	}
+}
+
+func TestLoadAPIParams_Url(t *testing.T) {
+	ctx := context.Background()
+
+	v := viper.New()
+
+	v.Set("key", "00000000-0000-4000-8000-000000000000")
+	v.Set("api-url", "http://localhost:8080")
+
+	params, err := cmdparams.LoadAPIParams(ctx, v)
+	require.NoError(t, err)
+
+	assert.Equal(t, "http://localhost:8080", params.URL)
+}
+
+func TestLoadAPIParams_Url_FlagTakesPrecedence(t *testing.T) {
+	ctx := context.Background()
+
+	v := viper.New()
+
+	v.Set("key", "00000000-0000-4000-8000-000000000000")
+	v.Set("api-url", "http://localhost:8080")
+	v.Set("settings.api_url", "http://localhost:8081")
+
+	params, err := cmdparams.LoadAPIParams(ctx, v)
+	require.NoError(t, err)
+
+	assert.Equal(t, "http://localhost:8080", params.URL)
+}
+
+func TestLoadAPIParams_Url_FlagDeprecatedTakesPrecedence(t *testing.T) {
+	ctx := context.Background()
+
+	v := viper.New()
+
+	v.Set("key", "00000000-0000-4000-8000-000000000000")
+	v.Set("apiurl", "http://localhost:8080")
+	v.Set("settings.api_url", "http://localhost:8081")
+
+	params, err := cmdparams.LoadAPIParams(ctx, v)
+	require.NoError(t, err)
+
+	assert.Equal(t, "http://localhost:8080", params.URL)
+}
+
+func TestLoadAPIParams_Url_FromConfig(t *testing.T) {
+	ctx := context.Background()
+
+	v := viper.New()
+
+	v.Set("key", "00000000-0000-4000-8000-000000000000")
+	v.Set("settings.api_url", "http://localhost:8081")
+
+	params, err := cmdparams.LoadAPIParams(ctx, v)
+	require.NoError(t, err)
+
+	assert.Equal(t, "http://localhost:8081", params.URL)
 }
 
 func TestLoadAPIParams_Url_Default(t *testing.T) {
@@ -2444,7 +2461,7 @@ func TestLoadAPIParams_Url_InvalidFormat(t *testing.T) {
 
 	var errauth api.ErrAuth
 
-	assert.ErrorAs(t, err, &errauth)
+	require.ErrorAs(t, err, &errauth)
 	assert.EqualError(t, errauth, `invalid api url: parse "http://in valid": invalid character " " in host name`)
 }
 

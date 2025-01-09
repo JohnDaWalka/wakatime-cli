@@ -103,6 +103,15 @@ func TestFirstNonEmptyString(t *testing.T) {
 	assert.Equal(t, "secret", value)
 }
 
+func TestFirstNonEmptyString_Empty(t *testing.T) {
+	v := viper.New()
+	v.Set("second", "")
+	v.Set("third", "secret")
+
+	value := vipertools.FirstNonEmptyString(v, "first", "second", "third")
+	assert.Empty(t, value)
+}
+
 func TestFirstNonEmptyString_NilPointer(t *testing.T) {
 	value := vipertools.FirstNonEmptyString(nil, "first")
 	assert.Empty(t, value)

@@ -83,6 +83,7 @@ func TestLoadParams_LogFile_FromEnvVar(t *testing.T) {
 	ctx := context.Background()
 
 	v := viper.New()
+
 	t.Setenv("WAKATIME_HOME", dir)
 
 	params, err := logfile.LoadParams(ctx, v)

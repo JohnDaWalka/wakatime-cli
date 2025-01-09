@@ -68,22 +68,21 @@ func FirstNonEmptyString(v *viper.Viper, keys ...string) string {
 	}
 
 	for _, key := range keys {
-		// if !v.IsSet(key) {
-		// 	continue
-		// }
-
-		// value := v.Get(key)
-
-		// parsed, err := cast.ToStringE(value)
-		// if err != nil {
-		// 	continue
-		// }
-
-		// return parsed
-
-		if value := GetString(v, key); value != "" {
-			return value
+		if !v.IsSet(key) {
+			continue
 		}
+
+		value := v.Get(key)
+
+		parsed, err := cast.ToStringE(value)
+		if err != nil {
+			continue
+		}
+
+		return strings.Trim(parsed, `"'`)
+		//	if value := GetString(v, key); value != "" {
+		//		return value
+		//	}
 	}
 
 	return ""
