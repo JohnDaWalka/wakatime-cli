@@ -388,7 +388,7 @@ func LoadHeartbeatParams(ctx context.Context, v *viper.Viper) (Heartbeat, error)
 		return Heartbeat{}, errors.New("failed to retrieve entity")
 	}
 
-	entityExpanded, err := homedir.Expand(entity)
+	entity, err := homedir.Expand(entity)
 	if err != nil {
 		return Heartbeat{}, fmt.Errorf("failed expanding entity: %s", err)
 	}
@@ -463,7 +463,7 @@ func LoadHeartbeatParams(ctx context.Context, v *viper.Viper) (Heartbeat, error)
 	return Heartbeat{
 		Category:          category,
 		CursorPosition:    cursorPosition,
-		Entity:            entityExpanded,
+		Entity:            entity,
 		ExtraHeartbeats:   extraHeartbeats,
 		EntityType:        entityType,
 		GuessLanguage:     vipertools.FirstNonEmptyBool(v, "guess-language", "settings.guess_language"),
