@@ -1061,7 +1061,12 @@ func TestSendHeartbeats_ObfuscateProject(t *testing.T) {
 		lines, err := project.ReadFile(ctx, filepath.Join(fp, "wakatime-cli", ".wakatime-project"), 1)
 		require.NoError(t, err)
 
-		expectedBodyStr := fmt.Sprintf(string(expectedBody), entity.Entity, lines[0], heartbeat.UserAgent(ctx, plugin))
+		expectedBodyStr := fmt.Sprintf(
+			string(expectedBody),
+			entity.Entity,
+			lines[0],
+			heartbeat.UserAgent(ctx, plugin),
+		)
 
 		assert.True(t, strings.HasSuffix(entity.Entity, "src/pkg/file.go"))
 		assert.JSONEq(t, expectedBodyStr, string(body))

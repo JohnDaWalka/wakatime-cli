@@ -41,7 +41,8 @@ api_key_vault_cmd = command arg arg ... (space-separated, no shell syntax)
 api_url = https://api.wakatime.com/api/v1
 hide_file_names = false
 hide_project_names = false
-hide_branch_names =
+hide_branch_names = false
+hide_dependencies = false
 hide_project_folder = false
 exclude =
     ^COMMIT_EDITMSG$
@@ -95,6 +96,7 @@ some/submodule/name = new project name
 | hide_file_names                | Obfuscate filenames. Will not send file names to api. | _bool_;_list_ | `false` |
 | hide_project_names             | Obfuscate project names. When a project folder is detected instead of using the folder name as the project, a `.wakatime-project file` is created with a random project name. | _bool_;_list_ | `false` |
 | hide_branch_names              | Obfuscate branch names. Will not send revision control branch names to api. | _bool_;_list_ | `false` |
+| hide_dependencies              | Prevent sending imports/libraries/dependencies used in currently focused file to the api.  | _bool_;_list_ | `false` |
 | hide_project_folder            | When set, send the file's path relative to the project folder. For ex: `/User/me/projects/bar/src/file.ts` is sent as `src/file.ts` so the server never sees the full path. When the project folder cannot be detected, only the file name is sent. For ex: `file.ts`. | _bool_ | `false` |
 | exclude                        | Filename patterns to exclude from logging. POSIX regex syntax. | _bool_;_list_ | |
 | include                        | Filename patterns to log. When used in combination with `exclude`, files matching `include` will still be logged. POSIX regex syntax | _bool_;_list_ | |
@@ -111,7 +113,7 @@ some/submodule/name = new project name
 | hostname                       | Optional name of local machine. By default, auto-detects the local machine’s hostname. | _string_ | |
 | log_file                       | Optional log file path. | _filepath_ | `~/.wakatime/wakatime.log` |
 | import_cfg                     | Optional path to another wakatime.cfg file to import. If set it will overwrite values loaded from $WAKATIME_HOME/.wakatime.cfg file. | _filepath_ | |
-| metrics                        | When set, collects metrics usage in `~/.wakatime/metrics` folder. For further reference visit <https://go.dev/blog/pprof>. | _bool_ | `false` |
+| metrics                        | When set, collects metrics usage in '~/.wakatime/metrics' folder. For further reference visit <https://go.dev/blog/pprof>. | _bool_ | `false` |
 | guess_language                 | When `true`, enables detecting programming language from file contents. | _bool_ | `false` |
 
 ### Project Map Section
@@ -142,9 +144,9 @@ However, if an api key exists in your `~/.wakatime.cfg` file then it takes prece
 
 ### Git Section
 
-| option                         | description | type | default value |
-| ---                            | ---         | ---  | ---           |
-| submodules_disabled            | It will be matched against the submodule path and if matching, will skip it. | _bool_;_list_ | false |
+| option              | description | type | default value |
+| ---                 | ---         | ---  | ---           |
+| submodules_disabled | It will be matched against the submodule path and if matching, will skip it. | _bool_;_list_ | false |
 
 ### Git Submodule Project Map Section
 
