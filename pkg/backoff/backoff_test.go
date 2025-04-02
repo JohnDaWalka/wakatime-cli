@@ -40,7 +40,7 @@ func TestWithBackoff(t *testing.T) {
 		}, nil
 	})
 
-	_, err = handle(context.Background(), []heartbeat.Heartbeat{})
+	_, err = handle(t.Context(), []heartbeat.Heartbeat{})
 	require.NoError(t, err)
 
 	err = ini.ReadInConfig(v, tmpFile.Name())
@@ -57,7 +57,7 @@ func TestWithBackoff_BeforeNextBackoff(t *testing.T) {
 
 	defer tmpFile.Close()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	v := setupViper(t)
 	v.Set("internal-config", tmpFile.Name())
@@ -132,7 +132,7 @@ func TestWithBackoff_BeforeNextBackoffWithProxy(t *testing.T) {
 		}, nil
 	})
 
-	_, err := handle(context.Background(), []heartbeat.Heartbeat{})
+	_, err := handle(t.Context(), []heartbeat.Heartbeat{})
 	require.Error(t, err)
 
 	assert.Equal(t, "won't send heartbeat due to backoff with proxy", err.Error())
@@ -156,7 +156,7 @@ func TestWithBackoff_ApiError(t *testing.T) {
 		return []heartbeat.Result{}, errors.New("error")
 	})
 
-	_, err = handle(context.Background(), []heartbeat.Heartbeat{})
+	_, err = handle(t.Context(), []heartbeat.Heartbeat{})
 	require.Error(t, err)
 
 	assert.Equal(t, "error", err.Error())
@@ -192,7 +192,7 @@ func TestWithBackoff_BackoffAndNotReset(t *testing.T) {
 		}, nil
 	})
 
-	_, err = handle(context.Background(), []heartbeat.Heartbeat{})
+	_, err = handle(t.Context(), []heartbeat.Heartbeat{})
 	require.Error(t, err)
 
 	var errbackoff api.ErrBackoff
@@ -213,7 +213,7 @@ func TestWithBackoff_BackoffMaxReached(t *testing.T) {
 
 	defer tmpFile.Close()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	v := setupViper(t)
 	v.Set("internal-config", tmpFile.Name())
@@ -269,7 +269,7 @@ func TestWithBackoff_BackoffMaxReachedWithZeroRetries(t *testing.T) {
 
 	defer tmpFile.Close()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	v := setupViper(t)
 	v.Set("internal-config", tmpFile.Name())
@@ -325,7 +325,7 @@ func TestWithBackoff_ShouldRetry(t *testing.T) {
 
 	defer tmpFile.Close()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	v := setupViper(t)
 	v.Set("internal-config", tmpFile.Name())

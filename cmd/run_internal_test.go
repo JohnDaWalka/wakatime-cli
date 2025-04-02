@@ -28,7 +28,7 @@ import (
 func TestRunCmd(t *testing.T) {
 	v := setupViper(t)
 
-	err := runCmd(context.Background(), v, false, false, func(_ context.Context, _ *viper.Viper) (int, error) {
+	err := runCmd(t.Context(), v, false, false, func(_ context.Context, _ *viper.Viper) (int, error) {
 		return exitcode.Success, nil
 	})
 
@@ -38,7 +38,7 @@ func TestRunCmd(t *testing.T) {
 func TestRunCmd_Err(t *testing.T) {
 	v := setupViper(t)
 
-	err := runCmd(context.Background(), v, false, false, func(_ context.Context, _ *viper.Viper) (int, error) {
+	err := runCmd(t.Context(), v, false, false, func(_ context.Context, _ *viper.Viper) (int, error) {
 		return exitcode.ErrGeneric, errors.New("fail")
 	})
 
@@ -100,7 +100,7 @@ func TestRunCmd_Panic(t *testing.T) {
 
 	defer logFile.Close()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	v := setupViper(t)
 	v.Set("api-url", testServerURL)
@@ -180,7 +180,7 @@ func TestRunCmd_Panic_Verbose(t *testing.T) {
 
 	defer logFile.Close()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	v := setupViper(t)
 	v.Set("api-url", testServerURL)
@@ -261,7 +261,7 @@ func TestRunCmd_ErrOfflineEnqueue(t *testing.T) {
 	v.Set("key", "00000000-0000-4000-8000-000000000000")
 	v.Set("plugin", "vim")
 
-	err := runCmd(context.Background(), v, true, false, func(_ context.Context, _ *viper.Viper) (int, error) {
+	err := runCmd(t.Context(), v, true, false, func(_ context.Context, _ *viper.Viper) (int, error) {
 		return exitcode.ErrGeneric, errors.New("fail")
 	})
 
@@ -273,7 +273,7 @@ func TestRunCmd_ErrOfflineEnqueue(t *testing.T) {
 }
 
 func TestRunCmd_BackoffLoggedWithVerbose(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	verbose := true
 
 	testServerURL, router, tearDown := setupTestServer()
@@ -337,7 +337,7 @@ func TestRunCmd_BackoffLoggedWithVerbose(t *testing.T) {
 }
 
 func TestRunCmd_BackoffNotLogged(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	verbose := false
 
 	testServerURL, router, tearDown := setupTestServer()
@@ -405,7 +405,7 @@ func TestParseConfigFiles(t *testing.T) {
 	v.Set("config", "testdata/.wakatime.cfg")
 	v.Set("internal-config", "testdata/.wakatime-internal.cfg")
 
-	err := parseConfigFiles(context.Background(), v)
+	err := parseConfigFiles(t.Context(), v)
 	require.NoError(t, err)
 
 	assert.Equal(t, "true", v.GetString("settings.debug"))
@@ -428,7 +428,7 @@ func TestParseConfigFiles_MissingAPIKey(t *testing.T) {
 	v.Set("config", "testdata/.wakatime-empty.cfg")
 	v.Set("internal-config", "testdata/.wakatime-internal.cfg")
 
-	err := parseConfigFiles(context.Background(), v)
+	err := parseConfigFiles(t.Context(), v)
 
 	assert.NoError(t, err)
 }
@@ -440,7 +440,7 @@ func TestParseConfigFiles_APIKey_FlagTakesPrecedence(t *testing.T) {
 	v.Set("settings.import_cfg", "")
 	v.Set("internal-config", "testdata/.wakatime-internal.cfg")
 
-	err := parseConfigFiles(context.Background(), v)
+	err := parseConfigFiles(t.Context(), v)
 	require.NoError(t, err)
 
 	assert.Equal(t,
