@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -25,6 +26,7 @@ func TestWithDetection_EntityNotFile(t *testing.T) {
 		Heartbeats  []heartbeat.Heartbeat
 		Override    string
 		Alternative string
+		Config      project.Config
 		Expected    heartbeat.Heartbeat
 	}{
 		"entity not file override takes precedence": {
@@ -69,11 +71,28 @@ func TestWithDetection_EntityNotFile(t *testing.T) {
 				Project:    heartbeat.PointerTo(""),
 			},
 		},
+		"entity not file with project obfuscation": {
+			Heartbeats: []heartbeat.Heartbeat{
+				{
+					Entity:          "github.com",
+					EntityType:      heartbeat.AppType,
+					ProjectOverride: "billing",
+				},
+			},
+			Config: project.Config{HideProjectNames: []regex.Regex{regex.NewRegexpWrap(regexp.MustCompile(".*"))}},
+			Expected: heartbeat.Heartbeat{
+				Branch:          heartbeat.PointerTo(""),
+				Entity:          "github.com",
+				EntityType:      heartbeat.AppType,
+				Project:         heartbeat.PointerTo(""),
+				ProjectOverride: "billing",
+			},
+		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			opt := project.WithDetection(project.Config{})
+			opt := project.WithDetection(test.Config)
 
 			handle := opt(func(_ context.Context, hh []heartbeat.Heartbeat) ([]heartbeat.Result, error) {
 				assert.Equal(t, []heartbeat.Heartbeat{
