@@ -12,9 +12,11 @@ import (
 	"github.com/wakatime/wakatime-cli/pkg/heartbeat"
 	"github.com/wakatime/wakatime-cli/pkg/ini"
 
+	viperini "github.com/go-viper/encoding/ini"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	iniv1 "gopkg.in/ini.v1"
 )
 
 func TestWithBackoff(t *testing.T) {
@@ -23,7 +25,7 @@ func TestWithBackoff(t *testing.T) {
 
 	defer tmpFile.Close()
 
-	v := viper.New()
+	v := setupViper(t)
 	v.Set("internal-config", tmpFile.Name())
 
 	opt := backoff.WithBackoff(backoff.Config{
@@ -57,7 +59,7 @@ func TestWithBackoff_BeforeNextBackoff(t *testing.T) {
 
 	ctx := context.Background()
 
-	v := viper.New()
+	v := setupViper(t)
 	v.Set("internal-config", tmpFile.Name())
 
 	at := time.Now()
@@ -137,7 +139,7 @@ func TestWithBackoff_BeforeNextBackoffWithProxy(t *testing.T) {
 }
 
 func TestWithBackoff_ApiError(t *testing.T) {
-	v := viper.New()
+	v := setupViper(t)
 
 	tmpFile, err := os.CreateTemp(t.TempDir(), "wakatime")
 	require.NoError(t, err)
@@ -173,7 +175,7 @@ func TestWithBackoff_BackoffAndNotReset(t *testing.T) {
 
 	defer tmpFile.Close()
 
-	v := viper.New()
+	v := setupViper(t)
 	v.Set("internal-config", tmpFile.Name())
 
 	opt := backoff.WithBackoff(backoff.Config{
@@ -213,7 +215,7 @@ func TestWithBackoff_BackoffMaxReached(t *testing.T) {
 
 	ctx := context.Background()
 
-	v := viper.New()
+	v := setupViper(t)
 	v.Set("internal-config", tmpFile.Name())
 
 	// first, cause backoff to be set
@@ -269,7 +271,7 @@ func TestWithBackoff_BackoffMaxReachedWithZeroRetries(t *testing.T) {
 
 	ctx := context.Background()
 
-	v := viper.New()
+	v := setupViper(t)
 	v.Set("internal-config", tmpFile.Name())
 
 	// first, cause backoff to be set
@@ -325,7 +327,7 @@ func TestWithBackoff_ShouldRetry(t *testing.T) {
 
 	ctx := context.Background()
 
-	v := viper.New()
+	v := setupViper(t)
 	v.Set("internal-config", tmpFile.Name())
 
 	opt := backoff.WithBackoff(backoff.Config{
@@ -374,4 +376,17 @@ func TestWithBackoff_ShouldRetry(t *testing.T) {
 	// make sure backoff settings reset
 	assert.Empty(t, v.GetString("internal.backoff_at"))
 	assert.Equal(t, "0", v.GetString("internal.backoff_retries"))
+}
+
+func setupViper(t *testing.T) *viper.Viper {
+	multilineOption := iniv1.LoadOptions{AllowPythonMultilineValues: true}
+	iniCodec := viperini.Codec{LoadOptions: multilineOption}
+
+	codecRegistry := viper.NewCodecRegistry()
+	err := codecRegistry.RegisterCodec("ini", iniCodec)
+	require.NoError(t, err)
+
+	v := viper.NewWithOptions(viper.WithCodecRegistry(codecRegistry))
+
+	return v
 }
