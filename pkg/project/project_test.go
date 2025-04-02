@@ -19,7 +19,7 @@ import (
 )
 
 func TestWithDetection_EntityNotFile(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := map[string]struct {
 		Heartbeats  []heartbeat.Heartbeat
@@ -92,7 +92,7 @@ func TestWithDetection_EntityNotFile(t *testing.T) {
 func TestWithDetection_WakatimeProjectTakesPrecedence(t *testing.T) {
 	fp := setupTestGitBasic(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	entity := filepath.Join(fp, "wakatime-cli/src/pkg/file.go")
 	projectPath := filepath.Join(fp, "wakatime-cli")
@@ -151,7 +151,7 @@ func TestWithDetection_OverrideTakesPrecedence(t *testing.T) {
 
 	entity := filepath.Join(fp, "wakatime-cli/src/pkg/file.go")
 	projectPath := filepath.Join(fp, "wakatime-cli")
-	projectPath = project.FormatProjectFolder(context.Background(), projectPath)
+	projectPath = project.FormatProjectFolder(t.Context(), projectPath)
 
 	if runtime.GOOS == "windows" {
 		entity = windows.FormatFilePath(entity)
@@ -175,7 +175,7 @@ func TestWithDetection_OverrideTakesPrecedence(t *testing.T) {
 		return nil, nil
 	})
 
-	_, err := handle(context.Background(), []heartbeat.Heartbeat{
+	_, err := handle(t.Context(), []heartbeat.Heartbeat{
 		{
 			EntityType:      heartbeat.FileType,
 			Entity:          entity,
@@ -213,7 +213,7 @@ func TestWithDetection_OverrideTakesPrecedence_WithProjectPathOverride(t *testin
 		return nil, nil
 	})
 
-	_, err := handle(context.Background(), []heartbeat.Heartbeat{
+	_, err := handle(t.Context(), []heartbeat.Heartbeat{
 		{
 			EntityType:          heartbeat.FileType,
 			Entity:              entity,
@@ -230,7 +230,7 @@ func TestWithDetection_NoneDetected(t *testing.T) {
 
 	defer tmpFile.Close()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	entity := tmpFile.Name()
 
@@ -283,7 +283,7 @@ func TestWithDetection_NoneDetected_AlternateTakesPrecedence(t *testing.T) {
 
 	defer tmpFile.Close()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	entity := tmpFile.Name()
 
@@ -340,7 +340,7 @@ func TestWithDetection_NoneDetected_OverrideTakesPrecedence(t *testing.T) {
 
 	defer tmpFile.Close()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	entity := tmpFile.Name()
 
@@ -396,7 +396,7 @@ func TestWithDetection_NoneDetected_WithProjectPathOverride(t *testing.T) {
 
 	defer tmpFile.Close()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	opts := []heartbeat.HandleOption{
 		heartbeat.WithFormatting(),
@@ -449,7 +449,7 @@ func TestWithDetection_NoneDetected_WithProjectPathOverride(t *testing.T) {
 func TestWithDetection_ObfuscateProject(t *testing.T) {
 	fp := setupTestGitBasic(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	entity := filepath.Join(fp, "wakatime-cli/src/pkg/file.go")
 	projectPath := filepath.Join(fp, "wakatime-cli")
@@ -506,7 +506,7 @@ func TestDetect_FileDetected(t *testing.T) {
 		filepath.Join(tmpDir, "entity.any"),
 	)
 
-	result, detector := project.Detect(context.Background(), []project.MapPattern{}, project.DetecterArg{
+	result, detector := project.Detect(t.Context(), []project.MapPattern{}, project.DetecterArg{
 		Filepath:  filepath.Join(tmpDir, "entity.any"),
 		ShouldRun: true,
 	})
@@ -535,7 +535,7 @@ func TestDetect_EmptyFileDetected(t *testing.T) {
 		filepath.Join(tmpDir, "wakatime-cli", "entity.any"),
 	)
 
-	result, detector := project.Detect(context.Background(), []project.MapPattern{}, project.DetecterArg{
+	result, detector := project.Detect(t.Context(), []project.MapPattern{}, project.DetecterArg{
 		Filepath:  filepath.Join(tmpDir, "wakatime-cli", "entity.any"),
 		ShouldRun: true,
 	})
@@ -565,7 +565,7 @@ func TestDetect_MapDetected(t *testing.T) {
 		},
 	}
 
-	result, detector := project.Detect(context.Background(), patterns, project.DetecterArg{
+	result, detector := project.Detect(t.Context(), patterns, project.DetecterArg{
 		Filepath:  tmpFile.Name(),
 		ShouldRun: true,
 	})
@@ -580,7 +580,7 @@ func TestDetectWithRevControl_GitDetected(t *testing.T) {
 	fp := setupTestGitBasic(t)
 
 	result := project.DetectWithRevControl(
-		context.Background(),
+		t.Context(),
 		[]regex.Regex{},
 		[]project.MapPattern{},
 		false,
@@ -602,7 +602,7 @@ func TestDetectWithRevControl_GitRemoteDetected(t *testing.T) {
 	fp := setupTestGitBasic(t)
 
 	result := project.DetectWithRevControl(
-		context.Background(),
+		t.Context(),
 		[]regex.Regex{},
 		[]project.MapPattern{},
 		true,
@@ -626,7 +626,7 @@ func TestDetect_NoProjectDetected(t *testing.T) {
 
 	defer tmpFile.Close()
 
-	result, detector := project.Detect(context.Background(), []project.MapPattern{}, project.DetecterArg{
+	result, detector := project.Detect(t.Context(), []project.MapPattern{}, project.DetecterArg{
 		Filepath:  tmpFile.Name(),
 		ShouldRun: true,
 	})

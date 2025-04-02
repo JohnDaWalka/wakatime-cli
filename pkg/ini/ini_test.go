@@ -22,7 +22,7 @@ func TestReadInConfig(t *testing.T) {
 	v := setupViper(t)
 	v.Set("config", "testdata/wakatime.cfg")
 
-	filePath, err := ini.FilePath(context.Background(), v)
+	filePath, err := ini.FilePath(t.Context(), v)
 	require.NoError(t, err)
 
 	err = ini.ReadInConfig(v, filePath)
@@ -40,7 +40,7 @@ func TestReadInConfig_Multiline(t *testing.T) {
 	v := setupViper(t)
 	v.Set("config", "testdata/wakatime-multiline.cfg")
 
-	filePath, err := ini.FilePath(context.Background(), v)
+	filePath, err := ini.FilePath(t.Context(), v)
 	require.NoError(t, err)
 
 	err = ini.ReadInConfig(v, filePath)
@@ -58,7 +58,7 @@ func TestReadInConfig_Multiple(t *testing.T) {
 	v.Set("config", "testdata/wakatime.cfg")
 	v.Set("internal-config", "testdata/wakatime-internal.cfg")
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	filePath, err := ini.FilePath(ctx, v)
 	require.NoError(t, err)
@@ -83,7 +83,7 @@ func TestReadInConfig_Corrupted(t *testing.T) {
 	v := setupViper(t)
 	v.Set("config", "testdata/corrupted.cfg")
 
-	filePath, err := ini.FilePath(context.Background(), v)
+	filePath, err := ini.FilePath(t.Context(), v)
 	require.NoError(t, err)
 
 	err = ini.ReadInConfig(v, filePath)
@@ -107,7 +107,7 @@ func TestReadInConfig_Malformed(t *testing.T) {
 	v := setupViper(t)
 	v.Set("config", "testdata/malformed.cfg")
 
-	filePath, err := ini.FilePath(context.Background(), v)
+	filePath, err := ini.FilePath(t.Context(), v)
 	require.NoError(t, err)
 
 	err = ini.ReadInConfig(v, filePath)
@@ -118,7 +118,7 @@ func TestFilePath(t *testing.T) {
 	home, err := os.UserHomeDir()
 	require.NoError(t, err)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := map[string]struct {
 		ViperValue string
@@ -165,7 +165,7 @@ func TestInternalFilePath(t *testing.T) {
 	home, err := os.UserHomeDir()
 	require.NoError(t, err)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := map[string]struct {
 		ViperValue string
@@ -203,7 +203,7 @@ func TestInternalFilePath(t *testing.T) {
 func TestNewWriter(t *testing.T) {
 	v := setupViper(t)
 
-	w, err := ini.NewWriter(context.Background(), v, func(_ context.Context, vp *viper.Viper) (string, error) {
+	w, err := ini.NewWriter(t.Context(), v, func(_ context.Context, vp *viper.Viper) (string, error) {
 		assert.Equal(t, v, vp)
 		return "testdata/wakatime.cfg", nil
 	})
@@ -216,7 +216,7 @@ func TestNewWriter(t *testing.T) {
 func TestNewWriterErr(t *testing.T) {
 	v := setupViper(t)
 
-	_, err := ini.NewWriter(context.Background(), v, func(_ context.Context, vp *viper.Viper) (string, error) {
+	_, err := ini.NewWriter(t.Context(), v, func(_ context.Context, vp *viper.Viper) (string, error) {
 		assert.Equal(t, v, vp)
 		return "", errors.New("error")
 	})
@@ -230,7 +230,7 @@ func TestNewWriter_MissingFile(t *testing.T) {
 
 	tmpDir := t.TempDir()
 
-	w, err := ini.NewWriter(context.Background(), v, func(_ context.Context, vp *viper.Viper) (string, error) {
+	w, err := ini.NewWriter(t.Context(), v, func(_ context.Context, vp *viper.Viper) (string, error) {
 		assert.Equal(t, v, vp)
 		return filepath.Join(tmpDir, "missing.cfg"), nil
 	})
@@ -245,7 +245,7 @@ func TestNewWriter_MissingFile(t *testing.T) {
 func TestNewWriter_CorruptedFile(t *testing.T) {
 	v := setupViper(t)
 
-	w, err := ini.NewWriter(context.Background(), v, func(_ context.Context, vp *viper.Viper) (string, error) {
+	w, err := ini.NewWriter(t.Context(), v, func(_ context.Context, vp *viper.Viper) (string, error) {
 		assert.Equal(t, v, vp)
 		return "testdata/corrupted.cfg", nil
 	})
@@ -261,7 +261,7 @@ func TestWrite(t *testing.T) {
 
 	defer tmpFile.Close()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := map[string]struct {
 		Value   map[string]string
@@ -302,7 +302,7 @@ func TestWrite_NoMultilineSideEffects(t *testing.T) {
 
 	defer tmpFile.Close()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	v := setupViper(t)
 	v.Set("config", tmpFile.Name())
@@ -335,7 +335,7 @@ func TestWrite_NullsRemoved(t *testing.T) {
 
 	defer tmpFile.Close()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	v := setupViper(t)
 	v.Set("config", tmpFile.Name())
@@ -365,7 +365,7 @@ func TestWrite_NullsRemoved(t *testing.T) {
 func TestWriteErr(t *testing.T) {
 	w := ini.WriterConfig{}
 
-	err := w.Write(context.Background(), "settings", map[string]string{"debug": "true"})
+	err := w.Write(t.Context(), "settings", map[string]string{"debug": "true"})
 	require.Error(t, err)
 
 	assert.Equal(t, "got undefined wakatime config file instance", err.Error())
