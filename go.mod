@@ -30,6 +30,8 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
+replace go.etcd.io/bbolt => github.com/wakatime/bbolt v1.5.0
+
 require (
 	github.com/alecthomas/colour v0.1.0 // indirect
 	github.com/alecthomas/repr v0.4.0 // indirect
