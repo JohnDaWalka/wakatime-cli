@@ -17,13 +17,13 @@ import (
 
 	"github.com/wakatime/wakatime-cli/cmd"
 	cmdheartbeat "github.com/wakatime/wakatime-cli/cmd/heartbeat"
-	cmdparams "github.com/wakatime/wakatime-cli/cmd/params"
 	"github.com/wakatime/wakatime-cli/pkg/api"
 	"github.com/wakatime/wakatime-cli/pkg/file"
 	"github.com/wakatime/wakatime-cli/pkg/heartbeat"
 	"github.com/wakatime/wakatime-cli/pkg/ini"
 	"github.com/wakatime/wakatime-cli/pkg/log"
 	"github.com/wakatime/wakatime-cli/pkg/offline"
+	paramspkg "github.com/wakatime/wakatime-cli/pkg/params"
 	"github.com/wakatime/wakatime-cli/pkg/project"
 	"github.com/wakatime/wakatime-cli/pkg/version"
 	"github.com/wakatime/wakatime-cli/pkg/windows"
@@ -1338,5 +1338,5 @@ func copyFile(t *testing.T, source, destination string) {
 func resetSingleton(t *testing.T) {
 	t.Helper()
 
-	cmdparams.Once = sync.Once{}
+	paramspkg.Once = sync.Once{}
 }
