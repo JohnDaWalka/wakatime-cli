@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	apicmd "github.com/wakatime/wakatime-cli/cmd/api"
 	offlinecmd "github.com/wakatime/wakatime-cli/cmd/offline"
@@ -17,13 +16,13 @@ import (
 	"github.com/wakatime/wakatime-cli/pkg/filestats"
 	"github.com/wakatime/wakatime-cli/pkg/filter"
 	"github.com/wakatime/wakatime-cli/pkg/heartbeat"
-	"github.com/wakatime/wakatime-cli/pkg/ini"
 	"github.com/wakatime/wakatime-cli/pkg/language"
 	_ "github.com/wakatime/wakatime-cli/pkg/lexer" // force to load all lexers
 	"github.com/wakatime/wakatime-cli/pkg/log"
 	"github.com/wakatime/wakatime-cli/pkg/offline"
 	paramspkg "github.com/wakatime/wakatime-cli/pkg/params"
 	"github.com/wakatime/wakatime-cli/pkg/project"
+	"github.com/wakatime/wakatime-cli/pkg/ratelimit"
 	"github.com/wakatime/wakatime-cli/pkg/remote"
 	"github.com/wakatime/wakatime-cli/pkg/wakaerror"
 
@@ -82,7 +81,7 @@ func SendHeartbeats(ctx context.Context, v *viper.Viper, queueFilepath string) e
 	setLogFields(ctx, params)
 	logger.Debugf("params: %s", params)
 
-	if RateLimited(RateLimitParams{
+	if ratelimit.IsRateLimited(ratelimit.Params{
 		Disabled:   params.Offline.Disabled,
 		LastSentAt: params.Offline.LastSentAt,
 		Timeout:    params.Offline.RateLimit,
@@ -158,7 +157,7 @@ func SendHeartbeats(ctx context.Context, v *viper.Viper, queueFilepath string) e
 		}
 	}
 
-	if err := ResetRateLimit(ctx, v); err != nil {
+	if err := ratelimit.Reset(ctx, v); err != nil {
 		logger.Errorf("failed to reset rate limit: %s", err)
 	}
 
@@ -187,48 +186,6 @@ func LoadParams(ctx context.Context, v *viper.Viper) (paramspkg.Params, error) {
 		Heartbeat: heartbeatParams,
 		Offline:   paramspkg.LoadOfflineParams(ctx, v),
 	}, nil
-}
-
-// RateLimitParams contains params for the RateLimited function.
-type RateLimitParams struct {
-	Disabled   bool
-	LastSentAt time.Time
-	Timeout    time.Duration
-}
-
-// RateLimited determines if we should send heartbeats to the API or save to the offline db.
-func RateLimited(params RateLimitParams) bool {
-	if params.Disabled {
-		return false
-	}
-
-	if params.Timeout == 0 {
-		return false
-	}
-
-	if params.LastSentAt.IsZero() {
-		return false
-	}
-
-	return time.Since(params.LastSentAt) < params.Timeout
-}
-
-// ResetRateLimit updates the internal.heartbeats_last_sent_at timestamp.
-func ResetRateLimit(ctx context.Context, v *viper.Viper) error {
-	w, err := ini.NewWriter(ctx, v, ini.InternalFilePath)
-	if err != nil {
-		return fmt.Errorf("failed to parse config file: %s", err)
-	}
-
-	keyValue := map[string]string{
-		"heartbeats_last_sent_at": time.Now().Format(ini.DateFormat),
-	}
-
-	if err := w.Write(ctx, "internal", keyValue); err != nil {
-		return fmt.Errorf("failed to write to internal config file: %s", err)
-	}
-
-	return nil
 }
 
 func buildHeartbeats(ctx context.Context, params paramspkg.Params) []heartbeat.Heartbeat {
